@@ -32,13 +32,13 @@ public class DataHelper {
     @Value
     public static class Cards {
         private String card;
+    }
 
-        public static Cards getFirstCard() {
-            return new Cards("5559 0000 0000 0001");
-        }
+    public static Cards getFirstCard() {
+        return new Cards("5559 0000 0000 0001");
+    }
 
-        public static Cards getSecondCard() {
-            return new Cards("5559 0000 0000 0002");
-        }
+    public static Cards getSecondCard() {
+        return new Cards("5559 0000 0000 0002");
     }
 }

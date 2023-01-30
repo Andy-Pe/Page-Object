@@ -6,6 +6,7 @@ import ru.netology.web.data.DataHelper;
 import ru.netology.web.page.*;
 
 import static com.codeborne.selenide.Selenide.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 class MoneyTransferTest {
@@ -16,44 +17,37 @@ class MoneyTransferTest {
     }
 
     @Test
-    void shouldTransferMoneyBetweenOwnCardsV1FirstCard() {
+    void shouldTransferMoneyBetweenOwnCardsFirstCard() {
         var authInfo = DataHelper.getAuthInfo();
-        new LoginPageV1()
+        new LoginPage()
                 .validLogin(authInfo)
                 .validVerify(DataHelper.getVerificationCodeFor(authInfo));
-        new TransferPage().transferCard(DataHelper.Cards.getFirstCard().getCard(), "5000");
+        new DashboardPage().amountCards(0);
+        new TransferPage().transferCard(DataHelper.getFirstCard().getCard(), "5000");
+
+        var expected = 10000;
+        var actual = new DashboardPage().getCardBalance(0);
+        assertEquals(expected, actual);
     }
 
     @Test
-    void shouldTransferMoneyBetweenOwnCardsV1SecondCard() {
+    void shouldTransferMoneyBetweenOwnCardsSecondCard() {
         var authInfo = DataHelper.getAuthInfo();
-        new LoginPageV1()
+        new LoginPage()
                 .validLogin(authInfo)
                 .validVerify(DataHelper.getVerificationCodeFor(authInfo));
-        new TransferPage().transferCard(DataHelper.Cards.getSecondCard().getCard(), "5000");
-    }
+        new DashboardPage().amountCards(1);
+        new TransferPage().transferCard(DataHelper.getSecondCard().getCard(), "5000");
 
-    @Test
-    void shouldTransferMoneyBetweenOwnCardsV2() {
-        var authInfo = DataHelper.getAuthInfo();
-        new LoginPageV2()
-                .validLogin(authInfo)
-                .validVerify(DataHelper.getVerificationCodeFor(authInfo));
-    }
-
-    @Test
-    void shouldTransferMoneyBetweenOwnCardsV3() {
-        var loginPage = open("http://localhost:9999", LoginPageV3.class);
-        var authInfo = DataHelper.getAuthInfo();
-        var verificationPage = loginPage.validLogin(authInfo);
-        var verificationCode = DataHelper.getVerificationCodeFor(authInfo);
-        verificationPage.validVerify(verificationCode);
+        var expected = 10000;
+        var actual = new DashboardPage().getCardBalance(1);
+        assertEquals(expected, actual);
     }
 
     @Test
     void shouldBeVisibleFirstCardBalance() {
         var authInfo = DataHelper.getAuthInfo();
-        new LoginPageV2()
+        new LoginPage()
                 .validLogin(authInfo)
                 .validVerify(DataHelper.getVerificationCodeFor(authInfo));
         new DashboardPage()
@@ -63,7 +57,7 @@ class MoneyTransferTest {
     @Test
     void shouldBeVisibleSecondCardBalance() {
         var authInfo = DataHelper.getAuthInfo();
-        new LoginPageV2()
+        new LoginPage()
                 .validLogin(authInfo)
                 .validVerify(DataHelper.getVerificationCodeFor(authInfo));
         new DashboardPage()
