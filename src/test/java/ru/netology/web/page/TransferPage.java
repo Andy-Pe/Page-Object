@@ -1,22 +1,38 @@
 package ru.netology.web.page;
 
+import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.SelenideElement;
 
+import static com.codeborne.selenide.Selectors.byText;
 import static com.codeborne.selenide.Selenide.$;
 
 public class TransferPage {
+    private SelenideElement paymentPage = $(byText("Пополнение карты"));
     private SelenideElement amountField = $("[data-test-id='amount'] input");
     private SelenideElement fromField = $("[data-test-id='from'] input");
     private SelenideElement transferButton = $("[data-test-id='action-transfer']");
+    private SelenideElement errorTransfer = $("[data-test-id='error-notification']");
 
-    public DashboardPage transferCard(String cardNumber, String sum) {
+
+    public void paymentVisible() {
+        paymentPage.shouldBe(Condition.appear);
+    }
+
+    public void setAmount(String sum) {
         amountField.setValue(sum);
-        fromField.setValue(cardNumber);
+    }
+
+    public void setFromCardField(String numberCard) {
+        fromField.setValue(numberCard);
+    }
+
+    public DashboardPage getTransfer() {
         transferButton.click();
         return new DashboardPage();
     }
 
-    public String getErrorMsg() {
-        return $("[data-test-id=error-notification]").getText();
+    public void invalidTransfer() {
+        transferButton.click();
+        errorTransfer.shouldBe(Condition.appear);
     }
 }
