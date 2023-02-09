@@ -6,7 +6,6 @@ import ru.netology.web.data.DataHelper;
 
 import java.time.Duration;
 
-import static com.codeborne.selenide.Selectors.by;
 import static com.codeborne.selenide.Selenide.$;
 
 public class LoginPage {
