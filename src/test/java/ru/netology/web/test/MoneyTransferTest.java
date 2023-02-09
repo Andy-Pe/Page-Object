@@ -11,99 +11,89 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 class MoneyTransferTest {
-    private String amount = "5000";
-    private String amountZero = "0";
-    private String amountOne = "1";
-    private String amountOverLimit = "20000";
+    LoginPage loginPage;
 
     @BeforeEach
     public void setup() {
-        open("http://localhost:9999");
-        val loginPage = new LoginPage();
-        val authInfo = DataHelper.getAuthInfo();
-        val verificationPage = loginPage.validLogin(authInfo);
-        val codeVerify = DataHelper.getVerificationCode();
-        verificationPage.validVerify(codeVerify);
+        loginPage = open("http://localhost:9999", LoginPage.class);
     }
 
     @Test
-    void shouldTransferAmountFromFirstToSecondCard() {
-        DashboardPage dashboardPage = new DashboardPage();
-        dashboardPage.isDashboardPage();
-        int expected1 = dashboardPage.getCardBalance(0) + Integer.parseInt(amount);
-        int expected2 = dashboardPage.getCardBalance(1) - Integer.parseInt(amount);
-        dashboardPage.amountCards(0);
-        TransferPage transferPage = new TransferPage();
-        transferPage.paymentVisible();
-        transferPage.setAmount(amount);
-        transferPage.setFromCardField(DataHelper.getSecondCard());
-        transferPage.getTransfer();
-        assertEquals(expected1, dashboardPage.getCardBalance(0));
-        assertEquals(expected2, dashboardPage.getCardBalance(1));
+    void shouldTransferFromFirstToSecond() {
+        var authInfo = DataHelper.getAuthInfo();
+        var verificationPage = loginPage.validLogin(authInfo);
+        var verificationCode = DataHelper.getVerificationCode();
+        var dashboardPage = verificationPage.validVerify(verificationCode);
+        var firstCardInfo = DataHelper.getFirstCardInfo();
+        var secondCardInfo = DataHelper.getSecondCardInfo();
+        var firstCardBalance = dashboardPage.getCardBalance(firstCardInfo);
+        var secondCardBalance = dashboardPage.getCardBalance(secondCardInfo);
+        var amount = DataHelper.generateValidAmount(firstCardBalance);
+        var expectedBalanceFirstCard = firstCardBalance - amount;
+        var expectedBalanceSecondCard = secondCardBalance + amount;
+        var transferPage = dashboardPage.selectCardToTransfer(secondCardInfo);
+        dashboardPage = transferPage.makeValidTransfer(String.valueOf(amount), firstCardInfo);
+        var actualBalanceFirstCard = dashboardPage.getCardBalance(firstCardInfo);
+        var actualBalanceSecondCard = dashboardPage.getCardBalance(secondCardInfo);
+        assertEquals(expectedBalanceFirstCard, actualBalanceFirstCard);
+        assertEquals(expectedBalanceSecondCard, actualBalanceSecondCard);
     }
 
     @Test
-    void shouldTransferAmountFromSecondToFirstCard() {
-        DashboardPage dashboardPage = new DashboardPage();
-        dashboardPage.isDashboardPage();
-        int expected1 = dashboardPage.getCardBalance(1) + Integer.parseInt(amount);
-        int expected2 = dashboardPage.getCardBalance(0) - Integer.parseInt(amount);
-        dashboardPage.amountCards(1);
-        TransferPage transferPage = new TransferPage();
-        transferPage.paymentVisible();
-        transferPage.setAmount(amount);
-        transferPage.setFromCardField(DataHelper.getFirstCard());
-        transferPage.getTransfer();
-        assertEquals(expected1, dashboardPage.getCardBalance(1));
-        assertEquals(expected2, dashboardPage.getCardBalance(0));
+    void shouldTransferFromSecondToFirst() {
+        var authInfo = DataHelper.getAuthInfo();
+        var verificationPage = loginPage.validLogin(authInfo);
+        var verificationCode = DataHelper.getVerificationCode();
+        var dashboardPage = verificationPage.validVerify(verificationCode);
+        var firstCardInfo = DataHelper.getFirstCardInfo();
+        var secondCardInfo = DataHelper.getSecondCardInfo();
+        var firstCardBalance = dashboardPage.getCardBalance(firstCardInfo);
+        var secondCardBalance = dashboardPage.getCardBalance(secondCardInfo);
+        var amount = DataHelper.generateValidAmount(secondCardBalance);
+        var expectedBalanceFirstCard = firstCardBalance + amount;
+        var expectedBalanceSecondCard = secondCardBalance - amount;
+        var transferPage = dashboardPage.selectCardToTransfer(firstCardInfo);
+        dashboardPage = transferPage.makeValidTransfer(String.valueOf(amount), secondCardInfo);
+        var actualBalanceFirstCard = dashboardPage.getCardBalance(firstCardInfo);
+        var actualBalanceSecondCard = dashboardPage.getCardBalance(secondCardInfo);
+        assertEquals(expectedBalanceFirstCard, actualBalanceFirstCard);
+        assertEquals(expectedBalanceSecondCard, actualBalanceSecondCard);
     }
 
     @Test
-    void shouldErrorTransferWhenAmountZero() {
-        DashboardPage dashboardPage = new DashboardPage();
-        dashboardPage.isDashboardPage();
-        int expected1 = dashboardPage.getCardBalance(0);
-        int expected2 = dashboardPage.getCardBalance(1);
-        dashboardPage.amountCards(0);
-        TransferPage transferPage = new TransferPage();
-        transferPage.paymentVisible();
-        transferPage.setAmount(amountZero);
-        transferPage.setFromCardField(DataHelper.getSecondCard());
-        transferPage.getTransfer();
-        assertEquals(expected1, dashboardPage.getCardBalance(0));
-        assertEquals(expected2, dashboardPage.getCardBalance(1));
-        // Должна быть ошибка с текстом: "Минимальная сумма перевода 1 рубль!"
-        transferPage.invalidTransfer();
+    void shouldBeErrorMessageIfAmountMoreBalance() {
+        var authInfo = DataHelper.getAuthInfo();
+        var verificationPage = loginPage.validLogin(authInfo);
+        var verificationCode = DataHelper.getVerificationCode();
+        var dashboardPage = verificationPage.validVerify(verificationCode);
+        var firstCardInfo = DataHelper.getFirstCardInfo();
+        var secondCardInfo = DataHelper.getSecondCardInfo();
+        var firstCardBalance = dashboardPage.getCardBalance(firstCardInfo);
+        var secondCardBalance = dashboardPage.getCardBalance(secondCardInfo);
+        var amount = DataHelper.generateInValidAmount(secondCardBalance);
+        var transferPage = dashboardPage.selectCardToTransfer(firstCardInfo);
+        transferPage.makeTransfer(String.valueOf(amount), secondCardInfo);
+        transferPage.findErrorMessage("Выполнена попытка перевода суммы, превышающей остаток на карте списания");
+        var actualBalanceFirstCard = dashboardPage.getCardBalance(firstCardInfo);
+        var actualBalanceSecondCard = dashboardPage.getCardBalance(secondCardInfo);
+        assertEquals(firstCardBalance, actualBalanceFirstCard);
+        assertEquals(secondCardBalance, actualBalanceSecondCard);
     }
 
     @Test
-    void shouldTransferOneRUB() {
-        DashboardPage dashboardPage = new DashboardPage();
-        dashboardPage.isDashboardPage();
-        int expected1 = dashboardPage.getCardBalance(0) + Integer.parseInt(amountOne);
-        int expected2 = dashboardPage.getCardBalance(1) - Integer.parseInt(amountOne);
-        dashboardPage.amountCards(0);
-        TransferPage transferPage = new TransferPage();
-        transferPage.paymentVisible();
-        transferPage.setAmount(amountOne);
-        transferPage.setFromCardField(DataHelper.getSecondCard());
-        transferPage.getTransfer();
-        assertEquals(expected1, dashboardPage.getCardBalance(0));
-        assertEquals(expected2, dashboardPage.getCardBalance(1));
+    void shouldErrorMsgWhenInvalidLogin() {
+        var invalidAuthInfo = DataHelper.getInvalidAuthInfo();
+        loginPage.invalidLogin(invalidAuthInfo);
+        loginPage.findErrorMessage("Ошибка! Неверно указан логин или пароль");
     }
 
     @Test
-    void shouldErrorTransferWhenAmountOverLimit() {
-        DashboardPage dashboardPage = new DashboardPage();
-        dashboardPage.isDashboardPage();
-        dashboardPage.amountCards(1);
-        TransferPage transferPage = new TransferPage();
-        transferPage.paymentVisible();
-        transferPage.setAmount(amountOverLimit);
-        transferPage.setFromCardField(DataHelper.getFirstCard());
-        transferPage.getTransfer();
-        //Должна быть ошибка с текстом: "Недостаточно средств для выполнения операции!"
-        transferPage.invalidTransfer();
+    void shouldErrorMsgWhenInvalidCode() {
+        var authInfo = DataHelper.getAuthInfo();
+        var verificationPage = loginPage.validLogin(authInfo);
+        var verificationCode = DataHelper.getInvalidVerificationCode();
+        verificationPage.invalidVerify(verificationCode);
+        verificationPage.findErrorMessage("Ошибка! Неверно указан код! Попробуйте ещё раз.");
     }
 }
 

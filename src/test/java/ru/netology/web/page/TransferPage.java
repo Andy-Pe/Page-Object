@@ -2,6 +2,9 @@ package ru.netology.web.page;
 
 import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.SelenideElement;
+import ru.netology.web.data.DataHelper;
+
+import java.time.Duration;
 
 import static com.codeborne.selenide.Selectors.byText;
 import static com.codeborne.selenide.Selenide.$;
@@ -13,26 +16,19 @@ public class TransferPage {
     private SelenideElement transferButton = $("[data-test-id='action-transfer']");
     private SelenideElement errorTransfer = $("[data-test-id='error-notification']");
 
-
-    public void paymentVisible() {
-        paymentPage.shouldBe(Condition.appear);
-    }
-
-    public void setAmount(String sum) {
-        amountField.setValue(sum);
-    }
-
-    public void setFromCardField(String numberCard) {
-        fromField.setValue(numberCard);
-    }
-
-    public DashboardPage getTransfer() {
-        transferButton.click();
+    public DashboardPage makeValidTransfer(String amountToTransfer, DataHelper.CardInfo cardInfo) {
+        makeTransfer(amountToTransfer, cardInfo);
         return new DashboardPage();
     }
 
-    public void invalidTransfer() {
+    public void makeTransfer(String amountToTransfer, DataHelper.CardInfo cardInfo) {
+        amountField.setValue(amountToTransfer);
+        fromField.setValue(cardInfo.getCardNumber());
         transferButton.click();
-        errorTransfer.shouldBe(Condition.appear);
+    }
+
+    public void findErrorMessage(String expectedText) {
+        errorTransfer.shouldHave(Condition.exactText(expectedText), Duration.ofSeconds(15))
+                .shouldBe(Condition.appear);
     }
 }
